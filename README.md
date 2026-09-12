@@ -2,7 +2,7 @@
 
 A lightweight VS Code extension that monitors your Google Antigravity token limits and quota remaining in real-time directly from the status bar.
 
-![Status Bar Preview](https://raw.githubusercontent.com/nathanielfaborada/antigravity-usage-monitor/main/.vscode/preview.png)
+![Status Bar Preview](https://res.cloudinary.com/diwwqfwjb/image/upload/v1789193578/Screenshot_1_b4yqj7.png)
 
 ## Features
 
