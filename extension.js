@@ -4,13 +4,19 @@ const path = require('path');
 const fs = require('fs');
 
 /**
- * Builds a visual progress bar using Unicode block characters.
- * Example: [██████░░░░]
+ * Returns a health badge and label based on remaining percentage quota:
+ * >= 50%: 🟢 Healthy
+ * 20% - 49%: 🟡 Moderate
+ * < 20%: 🔴 Critical
  */
-function createProgressBar(percent, totalBlocks = 10) {
-  const filledBlocks = Math.round((percent / 100) * totalBlocks);
-  const emptyBlocks = totalBlocks - filledBlocks;
-  return `[${'█'.repeat(Math.max(0, filledBlocks))}${'░'.repeat(Math.max(0, emptyBlocks))}]`;
+function getStatusBadge(percent) {
+  if (percent >= 50) {
+    return '🟢 Healthy';
+  } else if (percent >= 20) {
+    return '🟡 Moderate';
+  } else {
+    return '🔴 Critical';
+  }
 }
 
 /**
@@ -138,13 +144,13 @@ function activate(context) {
       md.isTrusted = true;
       md.supportThemeIcons = true;
 
-      md.appendMarkdown(`### $(dashboard) Antigravity Quota Overview\n\n`);
-      md.appendMarkdown(`| Model | Quota | Remaining | Reset Time |\n`);
-      md.appendMarkdown(`| :--- | :--- | :---: | :---: |\n`);
-      md.appendMarkdown(`| **Claude (5-Hour)** | \`${createProgressBar(claude5h.percent)}\` | **${claude5h.percent}%** | ${claude5h.time} |\n`);
-      md.appendMarkdown(`| **Claude (Weekly)** | \`${createProgressBar(claudeWk.percent)}\` | **${claudeWk.percent}%** | ${claudeWk.time} |\n`);
-      md.appendMarkdown(`| **Gemini (5-Hour)** | \`${createProgressBar(gemini5h.percent)}\` | **${gemini5h.percent}%** | ${gemini5h.time} |\n`);
-      md.appendMarkdown(`| **Gemini (Weekly)** | \`${createProgressBar(geminiWk.percent)}\` | **${geminiWk.percent}%** | ${geminiWk.time} |\n\n`);
+      md.appendMarkdown(`### $(dashboard) Antigravity Quotas\n\n`);
+      md.appendMarkdown(`| Model | Remaining | Status | Reset Time |\n`);
+      md.appendMarkdown(`| :--- | :---: | :---: | :---: |\n`);
+      md.appendMarkdown(`| **Claude (5h)** | ${claude5h.percent}% | ${getStatusBadge(claude5h.percent)} | ${claude5h.time} |\n`);
+      md.appendMarkdown(`| **Claude (Weekly)** | ${claudeWk.percent}% | ${getStatusBadge(claudeWk.percent)} | ${claudeWk.time} |\n`);
+      md.appendMarkdown(`| **Gemini (5h)** | ${gemini5h.percent}% | ${getStatusBadge(gemini5h.percent)} | ${gemini5h.time} |\n`);
+      md.appendMarkdown(`| **Gemini (Weekly)** | ${geminiWk.percent}% | ${getStatusBadge(geminiWk.percent)} | ${geminiWk.time} |\n\n`);
       md.appendMarkdown(`---\n*$(sync) Click status bar item to refresh immediately.*`);
 
       statusBarItem.tooltip = md;
