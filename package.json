@@ -14,10 +14,23 @@
     ],
   "main": "./extension.js",
   "contributes": {
-    "commands": [{
-      "command": "antigravity-usage-monitor.helloWorld",
-      "title": "Hello World"
-    }]
+    "commands": [
+      {
+        "command": "antigravity.refreshUsage",
+        "title": "Antigravity: Refresh Usage"
+      }
+    ],
+    "configuration": {
+      "title": "Antigravity Usage Monitor",
+      "properties": {
+        "antigravity.cliPath": {
+          "type": "string",
+          "default": "agy",
+          "description": "Executable name or absolute path to the agy CLI binary.",
+          "scope": "resource"
+        }
+      }
+    }
   },
   "scripts": {
     "lint": "eslint .",
