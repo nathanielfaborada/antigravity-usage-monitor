@@ -7,7 +7,7 @@ A lightweight VS Code extension that monitors your Google Antigravity token limi
 ## Features
 
 - **Compact Status Bar Indicator**: Displays your 5-hour quota remaining for Claude and Gemini models at a glance.
-- **Rich Markdown Tooltip**: Hover over the status bar item to view a detailed breakdown table with Unicode visual progress bars and localized reset times.
+- **Rich Markdown Tooltip**: Hover over the status bar item to view a detailed breakdown table with color-coded threshold badges (🟢 Healthy, 🟡 Moderate, 🔴 Critical) and localized reset times.
 - **Auto-Refresh & Manual Trigger**: Automatically refreshes metrics every 60 seconds or on-demand by clicking the status bar item.
 - **Cross-Platform & Portable**: Works seamlessly across Windows, macOS, and Linux with built-in path discovery and fallback detection.
 
