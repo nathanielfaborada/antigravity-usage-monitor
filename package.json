@@ -1,6 +1,6 @@
 {
-  "name": "antigravity-usage-monitor",
-  "displayName": "antigravity-usage-monitor",
+  "name": "antigravity-quota-monitor",
+  "displayName": "Antigravity Usage Monitor",
   "description": "Monitors Antigravity token limits in status bar",
   "version": "0.0.1",
   "publisher": "nathaniel-faborada",
