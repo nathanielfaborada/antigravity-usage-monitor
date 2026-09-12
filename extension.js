@@ -1,5 +1,7 @@
 const vscode = require('vscode');
 const { exec } = require('child_process');
+const path = require('path');
+const fs = require('fs');
 
 /**
  * Builds a visual progress bar using Unicode block characters.
@@ -23,6 +25,59 @@ function formatLocalTime(isoString) {
 }
 
 /**
+ * Returns candidate commands and fallback paths to locate the agy CLI binary.
+ */
+function getCliCandidates() {
+  const configPath = vscode.workspace.getConfiguration('antigravity').get('cliPath', 'agy');
+  const configured = (typeof configPath === 'string' && configPath.trim()) ? configPath.trim() : 'agy';
+  const candidates = [configured];
+
+  if (process.platform === 'win32') {
+    const localAppData = process.env.LOCALAPPDATA || '';
+    if (localAppData) {
+      candidates.push(path.join(localAppData, 'agy', 'bin', 'agy.exe'));
+    }
+  } else {
+    const home = process.env.HOME || '';
+    if (home) {
+      candidates.push(path.join(home, '.local', 'bin', 'agy'));
+    }
+    candidates.push('/usr/local/bin/agy');
+  }
+
+  return [...new Set(candidates.filter(Boolean))];
+}
+
+/**
+ * Sequentially attempts to run candidate commands until one succeeds.
+ */
+function executeUsageCommand(candidates, callback) {
+  if (!candidates || candidates.length === 0) {
+    return callback(new Error('CLI binary not found or failed to execute'));
+  }
+
+  const [current, ...rest] = candidates;
+  const isExplicitPath = current.includes('/') || current.includes('\\');
+
+  if (isExplicitPath && !fs.existsSync(current)) {
+    return executeUsageCommand(rest, callback);
+  }
+
+  const sanitized = current.replace(/^["']|["']$/g, '');
+  const cmd = `"${sanitized}" -p "/usage"`;
+
+  exec(cmd, (error, stdout, stderr) => {
+    if (error) {
+      if (rest.length > 0) {
+        return executeUsageCommand(rest, callback);
+      }
+      return callback(error, stdout, stderr);
+    }
+    return callback(null, stdout, stderr);
+  });
+}
+
+/**
  * @param {vscode.ExtensionContext} context
  */
 function activate(context) {
@@ -37,10 +92,23 @@ function activate(context) {
   statusBarItem.show();
 
   function fetchUsage() {
-    exec('agy -p "/usage"', (error, stdout, stderr) => {
+    const candidates = getCliCandidates();
+
+    executeUsageCommand(candidates, (error, stdout, stderr) => {
       if (error) {
-        statusBarItem.text = '$(warning) Ag: Offline';
-        statusBarItem.tooltip = 'Unable to invoke agy CLI binary.';
+        statusBarItem.text = '$(warning) Ag: CLI Missing';
+
+        const errMd = new vscode.MarkdownString();
+        errMd.isTrusted = true;
+        errMd.supportThemeIcons = true;
+        errMd.appendMarkdown(`### $(warning) Antigravity CLI Missing\n\n`);
+        errMd.appendMarkdown(`Unable to find or execute the \`agy\` CLI binary.\n\n`);
+        errMd.appendMarkdown(`**Troubleshooting:**\n`);
+        errMd.appendMarkdown(`1. Ensure the Antigravity CLI (\`agy\`) is installed and authenticated.\n`);
+        errMd.appendMarkdown(`2. Or specify the executable name/path in Settings: \`antigravity.cliPath\`.\n\n`);
+        errMd.appendMarkdown(`---\n*$(sync) Click status bar item to retry.*`);
+
+        statusBarItem.tooltip = errMd;
         return;
       }
 
@@ -88,11 +156,18 @@ function activate(context) {
     fetchUsage();
   });
 
+  const configListener = vscode.workspace.onDidChangeConfiguration((event) => {
+    if (event.affectsConfiguration('antigravity.cliPath')) {
+      statusBarItem.text = '$(sync~spin) Ag: Checking...';
+      fetchUsage();
+    }
+  });
+
   // Automatically refresh metrics every 60 seconds
   const timer = setInterval(fetchUsage, 60000);
   fetchUsage();
 
-  context.subscriptions.push(statusBarItem, refreshCmd, {
+  context.subscriptions.push(statusBarItem, refreshCmd, configListener, {
     dispose: () => clearInterval(timer)
   });
 }
