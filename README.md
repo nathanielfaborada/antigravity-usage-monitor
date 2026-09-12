@@ -20,6 +20,35 @@ Before using this extension, make sure:
    agy -p "/usage"
    ```
 
+## Installation
+
+### Option 1: Install via VSIX (Recommended)
+
+1. Download the latest `.vsix` file from the [Releases](https://github.com/nathanielfaborada/antigravity-usage-monitor/releases) page.
+2. Install it into VS Code using either method:
+   - **Via VS Code UI**:
+     1. Open VS Code and go to the Extensions view (`Ctrl + Shift + X`).
+     2. Click the `...` (More Actions) menu at the top-right of the Extensions panel.
+     3. Select **Install from VSIX...** and choose the downloaded file.
+   - **Via Terminal**:
+     ```bash
+     code --install-extension antigravity-usage-monitor-0.0.1.vsix
+     ```
+
+### Option 2: Build & Install from Source
+
+```bash
+# Clone the repository
+git clone https://github.com/nathanielfaborada/antigravity-usage-monitor.git
+cd antigravity-usage-monitor
+
+# Package the VSIX
+npx @vscode/vsce package --no-yarn --allow-missing-repository
+
+# Install into VS Code
+code --install-extension antigravity-usage-monitor-0.0.1.vsix --force
+```
+
 ## Configuration
 
 This extension can be customized through your VS Code Settings (`settings.json` or UI):
