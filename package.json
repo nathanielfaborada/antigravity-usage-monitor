@@ -1,5 +1,5 @@
 {
-  "name": "antigravity-quota-monitor",
+  "name": "agy-quota-monitor",
   "displayName": "Antigravity Usage Monitor",
   "description": "Monitors Antigravity token limits in status bar",
   "version": "0.0.1",
