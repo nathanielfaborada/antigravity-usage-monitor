@@ -2,7 +2,7 @@
   "name": "agy-quota-monitor",
   "displayName": "Antigravity Usage Monitor",
   "description": "Monitors Antigravity token limits in status bar",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "publisher": "nathaniel-faborada",
   "repository": {
     "type": "git",
@@ -12,19 +12,88 @@
     "vscode": "^1.137.0"
   },
   "categories": [
-    "Other"
+    "Other",
+    "Machine Learning"
   ],
+  "keywords": [
+    "antigravity",
+    "quota",
+    "usage",
+    "monitor",
+    "gemini",
+    "claude",
+    "ai",
+    "token"
+  ],
+  "icon": "resources/icon.png",
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": false,
+      "description": "Antigravity CLI execution is disabled in untrusted workspaces."
+    }
+  },
   "activationEvents": [
-  "onStartupFinished"
-    ],
+    "onStartupFinished",
+    "onCommand:antigravity.refreshUsage",
+    "onCommand:antigravity.showDetails",
+    "onCommand:antigravity.showLogs",
+    "onCommand:antigravity.copyModelId",
+    "onView:antigravity.quotaView"
+  ],
   "main": "./extension.js",
   "contributes": {
     "commands": [
       {
         "command": "antigravity.refreshUsage",
-        "title": "Antigravity: Refresh Usage"
+        "title": "Antigravity: Refresh Usage",
+        "icon": "$(sync)"
+      },
+      {
+        "command": "antigravity.showDetails",
+        "title": "Antigravity: Show Quota Details & Models"
+      },
+      {
+        "command": "antigravity.showLogs",
+        "title": "Antigravity: Show Diagnostics Logs",
+        "icon": "$(output)"
+      },
+      {
+        "command": "antigravity.copyModelId",
+        "title": "Antigravity: Copy Model ID",
+        "icon": "$(copy)"
       }
     ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "antigravity-monitor",
+          "title": "Antigravity",
+          "icon": "resources/icon.svg"
+        }
+      ]
+    },
+    "views": {
+      "antigravity-monitor": [
+        {
+          "id": "antigravity.quotaView",
+          "name": "Antigravity Usage"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "antigravity.refreshUsage",
+          "when": "view == antigravity.quotaView",
+          "group": "navigation"
+        },
+        {
+          "command": "antigravity.showLogs",
+          "when": "view == antigravity.quotaView",
+          "group": "navigation"
+        }
+      ]
+    },
     "configuration": {
       "title": "Antigravity Usage Monitor",
       "properties": {
@@ -32,7 +101,46 @@
           "type": "string",
           "default": "agy",
           "description": "Executable name or absolute path to the agy CLI binary.",
-          "scope": "resource"
+          "scope": "machine"
+        },
+        "antigravity.refreshInterval": {
+          "type": "integer",
+          "default": 60,
+          "minimum": 0,
+          "description": "Interval in seconds between automatic usage quota refreshes (0 to disable automatic polling).",
+          "scope": "application"
+        },
+        "antigravity.statusBarFormat": {
+          "type": "string",
+          "default": "compact",
+          "enum": [
+            "compact",
+            "lowestOnly",
+            "detailed",
+            "iconOnly"
+          ],
+          "enumDescriptions": [
+            "Default compact view showing short group names and 5-hour limits (e.g. Claude: 100% | Gem: 55%)",
+            "Shows only the lowest remaining quota metric (e.g. Gem: 55% (5h))",
+            "Detailed view showing both 5-hour and weekly limits per group (e.g. C: 100%/67% | G: 55%/14%)",
+            "Icon only with health color tint"
+          ],
+          "description": "Format of the usage information displayed in the status bar.",
+          "scope": "application"
+        },
+        "antigravity.notifyOnCritical": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a notification when any quota falls below the critical threshold.",
+          "scope": "application"
+        },
+        "antigravity.criticalThreshold": {
+          "type": "integer",
+          "default": 20,
+          "minimum": 1,
+          "maximum": 100,
+          "description": "Percentage threshold below which quota is considered critical and notifications are triggered.",
+          "scope": "application"
         }
       }
     }
@@ -43,12 +151,13 @@
     "test": "vscode-test"
   },
   "devDependencies": {
-    "@types/vscode": "^1.137.0",
     "@types/mocha": "^10.0.10",
     "@types/node": "24.x",
-    "eslint": "^10.5.0",
+    "@types/vscode": "^1.137.0",
     "@vscode/test-cli": "^0.0.15",
-    "@vscode/test-electron": "^3.0.0"
+    "@vscode/test-electron": "^3.0.0",
+    "eslint": "^10.5.0",
+    "globals": "^16.5.0"
   },
   "overrides": {
     "diff": "^8.0.4",
