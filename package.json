@@ -2,7 +2,7 @@
   "name": "agy-quota-monitor",
   "displayName": "Antigravity Usage Monitor",
   "description": "Monitors Antigravity token limits in status bar",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "publisher": "nathaniel-faborada",
   "repository": {
     "type": "git",

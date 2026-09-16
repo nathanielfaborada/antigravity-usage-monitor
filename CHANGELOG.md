@@ -4,6 +4,10 @@ All notable changes to the "agy-quota-monitor" (Antigravity Usage Monitor) exten
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [0.1.2] - 2026-09-16
+
+- Fix: Replaced `execFile` with a `spawn`-based `spawnHidden` helper that properly applies `CREATE_NO_WINDOW` to console-subsystem `.exe` files like `agy.exe`, fully eliminating the Windows terminal flash on every quota refresh.
+
 ## [0.1.1] - 2026-09-16
 
 - Fix: Eliminated Windows terminal/console flash on startup by prioritizing known absolute `.exe` paths before generic PATH lookups in CLI candidate resolution.

@@ -1,9 +1,75 @@
 const vscode = require('vscode');
-const { execFile } = require('child_process');
+const { spawn } = require('child_process');
 const path = require('path');
 const fs = require('fs');
 
+/**
+ * Spawns a process with full console-window suppression on Windows.
+ * Uses spawn() with windowsHide:true + shell:false + detached:false so that
+ * Windows applies CREATE_NO_WINDOW to the child process, preventing the brief
+ * console flash that console-subsystem .exe files (like agy.exe) can cause
+ * even when called via execFile with windowsHide:true.
+ *
+ * Callback signature matches execFile: (error, stdout, stderr) => void.
+ */
+function spawnHidden(file, args, options, callback) {
+  const spawnOpts = {
+    windowsHide: true,
+    shell: false,
+    detached: false,
+    stdio: 'pipe',
+    ...options
+  };
+
+  let stdout = '';
+  let stderr = '';
+  let finished = false;
+
+  let child;
+  try {
+    child = spawn(file, args, spawnOpts);
+  } catch (err) {
+    return callback(err, '', '');
+  }
+
+  child.stdout.on('data', (data) => { stdout += data.toString(); });
+  child.stderr.on('data', (data) => { stderr += data.toString(); });
+
+  const timer = options.timeout
+    ? setTimeout(() => {
+        if (!finished) {
+          finished = true;
+          try { child.kill(); } catch (_) {}
+          const err = new Error(`Command timed out after ${options.timeout}ms`);
+          err.code = 'ETIMEDOUT';
+          callback(err, stdout, stderr);
+        }
+      }, options.timeout)
+    : null;
+
+  child.on('error', (err) => {
+    if (finished) return;
+    finished = true;
+    if (timer) clearTimeout(timer);
+    callback(err, stdout, stderr);
+  });
+
+  child.on('close', (code) => {
+    if (finished) return;
+    finished = true;
+    if (timer) clearTimeout(timer);
+    if (code !== 0) {
+      const err = new Error(`Process exited with code ${code}`);
+      err.code = code;
+      callback(err, stdout, stderr);
+    } else {
+      callback(null, stdout, stderr);
+    }
+  });
+}
+
 // Global output channel for diagnostics
+
 let outputChannel;
 
 function getOutputChannel() {
@@ -386,7 +452,7 @@ function executeUsageCommand(candidates, callback, options = {}) {
   const startTime = Date.now();
   log(`Executing: ${sanitized} -p /usage --output-format json`);
 
-  execFile(sanitized, ['-p', '/usage', '--output-format', 'json'], { timeout: 10000, windowsHide: true, stdio: 'pipe' }, (jsonError, jsonStdout, jsonStderr) => {
+  spawnHidden(sanitized, ['-p', '/usage', '--output-format', 'json'], { timeout: 10000 }, (jsonError, jsonStdout, jsonStderr) => {
     const latency = Date.now() - startTime;
     if (!jsonError && jsonStdout) {
       log(`JSON engine succeeded in ${latency}ms`);
@@ -405,7 +471,7 @@ function executeUsageCommand(candidates, callback, options = {}) {
 
     // Try legacy fallback without --output-format json
     const legacyStart = Date.now();
-    execFile(sanitized, ['-p', '/usage'], { timeout: 10000, windowsHide: true, stdio: 'pipe' }, (legacyError, legacyStdout, legacyStderr) => {
+    spawnHidden(sanitized, ['-p', '/usage'], { timeout: 10000 }, (legacyError, legacyStdout, legacyStderr) => {
       const legLatency = Date.now() - legacyStart;
       if (!legacyError) {
         log(`Legacy text engine succeeded in ${legLatency}ms`);
@@ -443,7 +509,7 @@ function executeModelsCommand(candidates, callback, options = {}) {
   const start = Date.now();
   log(`Executing models query: ${sanitized} models`);
 
-  execFile(sanitized, ['models'], { timeout: 10000, windowsHide: true, stdio: 'pipe' }, (error, stdout, stderr) => {
+  spawnHidden(sanitized, ['models'], { timeout: 10000 }, (error, stdout, stderr) => {
     const latency = Date.now() - start;
     if (error) {
       log(`Models query candidate failed (${latency}ms): ${error.message}`, 'WARN');
