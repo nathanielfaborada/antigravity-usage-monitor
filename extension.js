@@ -317,16 +317,23 @@ function checkCriticalAlerts(parsedRows, config = {}, state = {}) {
 
 /**
  * Returns candidate commands and fallback paths to locate the agy CLI binary.
+ * On Windows, known full .exe paths are listed first to avoid PATH lookups
+ * that can briefly spawn a visible console window.
  */
 function getCliCandidates() {
   const configPath = vscode.workspace.getConfiguration('antigravity').get('cliPath', 'agy');
   const configured = sanitizePath(configPath) || 'agy';
-  const candidates = [configured];
 
   if (process.platform === 'win32') {
-    if (configured === 'agy') {
-      candidates.push('agy.exe');
+    const candidates = [];
+
+    // If the user configured a custom path, honour it first
+    if (configured !== 'agy') {
+      candidates.push(configured);
     }
+
+    // Prefer known absolute .exe paths first — avoids a PATH search that can
+    // briefly flash a console window on Windows before the process is hidden.
     const localAppData = process.env.LOCALAPPDATA || '';
     if (localAppData) {
       candidates.push(path.join(localAppData, 'agy', 'bin', 'agy.exe'));
@@ -335,15 +342,23 @@ function getCliCandidates() {
     if (userProfile) {
       candidates.push(path.join(userProfile, '.gemini', 'antigravity-cli', 'bin', 'agy.exe'));
     }
-  } else {
-    const home = process.env.HOME || '';
-    if (home) {
-      candidates.push(path.join(home, '.local', 'bin', 'agy'));
-    }
-    candidates.push('/usr/local/bin/agy');
-    candidates.push('/opt/homebrew/bin/agy');
-    candidates.push('/home/linuxbrew/.linuxbrew/bin/agy');
+
+    // Generic names as last-resort fallbacks
+    candidates.push('agy.exe');
+    candidates.push('agy');
+
+    return [...new Set(candidates.filter(Boolean))];
   }
+
+  // Non-Windows: original order
+  const candidates = [configured];
+  const home = process.env.HOME || '';
+  if (home) {
+    candidates.push(path.join(home, '.local', 'bin', 'agy'));
+  }
+  candidates.push('/usr/local/bin/agy');
+  candidates.push('/opt/homebrew/bin/agy');
+  candidates.push('/home/linuxbrew/.linuxbrew/bin/agy');
 
   return [...new Set(candidates.filter(Boolean))];
 }
@@ -371,7 +386,7 @@ function executeUsageCommand(candidates, callback, options = {}) {
   const startTime = Date.now();
   log(`Executing: ${sanitized} -p /usage --output-format json`);
 
-  execFile(sanitized, ['-p', '/usage', '--output-format', 'json'], { timeout: 10000, windowsHide: true }, (jsonError, jsonStdout, jsonStderr) => {
+  execFile(sanitized, ['-p', '/usage', '--output-format', 'json'], { timeout: 10000, windowsHide: true, stdio: 'pipe' }, (jsonError, jsonStdout, jsonStderr) => {
     const latency = Date.now() - startTime;
     if (!jsonError && jsonStdout) {
       log(`JSON engine succeeded in ${latency}ms`);
@@ -390,7 +405,7 @@ function executeUsageCommand(candidates, callback, options = {}) {
 
     // Try legacy fallback without --output-format json
     const legacyStart = Date.now();
-    execFile(sanitized, ['-p', '/usage'], { timeout: 10000, windowsHide: true }, (legacyError, legacyStdout, legacyStderr) => {
+    execFile(sanitized, ['-p', '/usage'], { timeout: 10000, windowsHide: true, stdio: 'pipe' }, (legacyError, legacyStdout, legacyStderr) => {
       const legLatency = Date.now() - legacyStart;
       if (!legacyError) {
         log(`Legacy text engine succeeded in ${legLatency}ms`);
@@ -428,7 +443,7 @@ function executeModelsCommand(candidates, callback, options = {}) {
   const start = Date.now();
   log(`Executing models query: ${sanitized} models`);
 
-  execFile(sanitized, ['models'], { timeout: 10000, windowsHide: true }, (error, stdout, stderr) => {
+  execFile(sanitized, ['models'], { timeout: 10000, windowsHide: true, stdio: 'pipe' }, (error, stdout, stderr) => {
     const latency = Date.now() - start;
     if (error) {
       log(`Models query candidate failed (${latency}ms): ${error.message}`, 'WARN');
