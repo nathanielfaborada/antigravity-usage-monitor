@@ -193,6 +193,40 @@ function getGroupCode(group) {
 }
 
 /**
+ * Computes the daily budget from a weekly quota row.
+ *
+ * Logic:
+ *   daysRemaining = ceil of hours between now and resetTime divided by 24
+ *                   (minimum 1 so we never divide by zero)
+ *   dailyBudgetPercent = Math.floor(row.percent / daysRemaining)
+ *
+ * Returns an object:
+ *   { dailyBudgetPercent, daysRemaining, isOverBudget }
+ * or null if the row has no valid resetTime or is not a weekly bucket.
+ */
+function computeDailyBudget(weeklyRow) {
+  if (!weeklyRow || weeklyRow.window !== 'weekly') return null;
+
+  const resetIso = weeklyRow.resetTime;
+  if (!resetIso || typeof resetIso !== 'string' || resetIso.length < 8) return null;
+
+  const resetDate = new Date(resetIso);
+  if (isNaN(resetDate.getTime())) return null;
+
+  const now = new Date();
+  const msRemaining = resetDate - now;
+  if (msRemaining <= 0) return null; // already past reset
+
+  const hoursRemaining = msRemaining / (1000 * 60 * 60);
+  const daysRemaining = Math.max(1, Math.ceil(hoursRemaining / 24));
+
+  const dailyBudgetPercent = Math.floor(weeklyRow.percent / daysRemaining);
+
+  return { dailyBudgetPercent, daysRemaining };
+}
+
+
+/**
  * Shortened limit display name:
  * "Five Hour Limit Remaining" -> "5h"
  * "Weekly Limit Remaining" -> "Weekly"
@@ -1046,15 +1080,62 @@ function activate(context) {
       md.isTrusted = true;
       md.supportThemeIcons = true;
 
+      const showDailyBudget = vscode.workspace.getConfiguration('antigravity').get('showDailyBudget', true);
+
       md.appendMarkdown(`### $(dashboard) Antigravity Quotas\n\n`);
-      md.appendMarkdown(`| Model | Remaining | Status | Reset Time |\n`);
-      md.appendMarkdown(`| :--- | :---: | :---: | :---: |\n`);
+
+      // --- Daily Budget Summary Section (per group) ---
+      if (showDailyBudget) {
+        const groups = sortGroups(parsedRows.map(r => r.group));
+        let hasBudgetSection = false;
+
+        for (const group of groups) {
+          const groupRows = parsedRows.filter(r => r.group === group);
+          const weeklyRow = groupRows.find(r => r.window === 'weekly');
+          const fiveHourRow = groupRows.find(r => r.window === '5h');
+          const budget = computeDailyBudget(weeklyRow);
+
+          if (budget) {
+            if (!hasBudgetSection) {
+              md.appendMarkdown(`> **$(calendar) Daily Budget Planner**\n>\n`);
+              hasBudgetSection = true;
+            }
+            const shortGroup = getShortGroupName(group);
+            const budgetBadge = budget.dailyBudgetPercent >= 15 ? '🟢' : budget.dailyBudgetPercent >= 7 ? '🟡' : '🔴';
+            const fiveHourNote = fiveHourRow
+              ? ` · 5h remaining: **${fiveHourRow.percent}%**`
+              : '';
+            md.appendMarkdown(`> **${shortGroup}** — Weekly quota ÷ ${budget.daysRemaining} day${budget.daysRemaining !== 1 ? 's' : ''} left = ${budgetBadge} **${budget.dailyBudgetPercent}% per day**${fiveHourNote}\n>\n`);
+          }
+        }
+
+        if (hasBudgetSection) {
+          md.appendMarkdown(`\n`);
+        }
+      }
+
+      // --- Main Quota Table ---
+      md.appendMarkdown(`| Model | Remaining | Status | Reset Time |${showDailyBudget ? ' Daily Budget |' : ''}\n`);
+      md.appendMarkdown(`| :--- | :---: | :---: | :---: |${showDailyBudget ? ' :---: |' : ''}\n`);
 
       for (const row of parsedRows) {
         const label = formatModelLabel(row.group, row.limit);
         const badge = getStatusBadge(row.percent);
         const resetStr = formatResetTime(row.resetTime);
-        md.appendMarkdown(`| ${label} | ${row.percent}% | ${badge} | ${resetStr} |\n`);
+
+        let dailyBudgetCell = '';
+        if (showDailyBudget) {
+          if (row.window === 'weekly') {
+            const budget = computeDailyBudget(row);
+            dailyBudgetCell = budget
+              ? ` 📅 **${budget.dailyBudgetPercent}%**/day |`
+              : ' — |';
+          } else {
+            dailyBudgetCell = ' — |';
+          }
+        }
+
+        md.appendMarkdown(`| ${label} | ${row.percent}% | ${badge} | ${resetStr} |${dailyBudgetCell}\n`);
       }
 
       md.appendMarkdown(`\n---\n* [$(sync) Refresh](command:antigravity.refreshUsage) &nbsp;|&nbsp; [$(list-selection) Details](command:antigravity.showDetails) &nbsp;|&nbsp; [$(output) Logs](command:antigravity.showLogs) &nbsp;|&nbsp; [$(gear) Settings](command:workbench.action.openSettings?%22antigravity%22)*\n`);

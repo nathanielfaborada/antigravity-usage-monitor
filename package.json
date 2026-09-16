@@ -2,7 +2,7 @@
   "name": "agy-quota-monitor",
   "displayName": "Antigravity Usage Monitor",
   "description": "Monitors Antigravity token limits in status bar",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "publisher": "nathaniel-faborada",
   "repository": {
     "type": "git",
@@ -140,6 +140,12 @@
           "minimum": 1,
           "maximum": 100,
           "description": "Percentage threshold below which quota is considered critical and notifications are triggered.",
+          "scope": "application"
+        },
+        "antigravity.showDailyBudget": {
+          "type": "boolean",
+          "default": true,
+          "description": "Show a Daily Budget Planner in the quota tooltip that divides the weekly remaining quota by the number of days left until reset, giving you a per-day spending allowance. Also displays the current 5-hour remaining quota alongside the daily budget.",
           "scope": "application"
         }
       }
