@@ -4,6 +4,13 @@ All notable changes to the "agy-quota-monitor" (Antigravity Usage Monitor) exten
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [0.1.3] - 2026-09-16
+
+- Feature: **Daily Budget Planner** — Weekly quota is automatically divided by the number of days remaining until reset, giving you a clear per-day spending allowance (e.g. Weekly 70% ÷ 5 days = 🟢 14%/day).
+- Feature: Daily Budget Planner also shows the current 5-hour remaining quota alongside each group's daily allowance.
+- Feature: New setting `antigravity.showDailyBudget` (default: `true`) to toggle the Daily Budget Planner on or off.
+- Feature: Weekly rows in the quota table now include a 📅 Daily Budget column.
+
 ## [0.1.2] - 2026-09-16
 
 - Fix: Replaced `execFile` with a `spawn`-based `spawnHidden` helper that properly applies `CREATE_NO_WINDOW` to console-subsystem `.exe` files like `agy.exe`, fully eliminating the Windows terminal flash on every quota refresh.
