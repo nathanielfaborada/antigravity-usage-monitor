@@ -4,6 +4,11 @@ All notable changes to the "agy-quota-monitor" (Antigravity Usage Monitor) exten
 
 Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
 
+## [0.1.1] - 2026-09-16
+
+- Fix: Eliminated Windows terminal/console flash on startup by prioritizing known absolute `.exe` paths before generic PATH lookups in CLI candidate resolution.
+- Fix: Added `stdio: 'pipe'` to all `execFile` calls to fully suppress any residual console window on Windows.
+
 ## [0.1.0] - 2026-09-14
 
 - Security hardening: Restricted `antigravity.cliPath` scope to `machine`, declared Workspace Trust restrictions, switched from `exec` to `execFile` with `windowsHide: true` to eliminate Windows terminal/console popup flashes.
