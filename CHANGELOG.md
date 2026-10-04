@@ -1,8 +1,26 @@
-# Change Log
+# Changelog
 
-All notable changes to the "agy-quota-monitor" (Antigravity Usage Monitor) extension will be documented in this file.
+## Unreleased
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
+- Rewrite setup and troubleshooting instructions; move development notes to CONTRIBUTING.md.
+- Remove superseded audit reports and the PowerShell API probe.
+- Parse refresh responses once and preserve the selected status bar format when readings become stale.
+- Keep previous readings when a response contains no usable quota data.
+
+## [0.1.5] - 2026-10-04
+
+- Fix: Refresh quota directly from Google's API using the existing Windows Antigravity login. Credential access uses native Windows calls; API refresh launches no CLI, shell, or PowerShell process.
+- Feature: API background refresh is enabled by default. Legacy CLI mode is an explicit manual-only option; API failures never trigger CLI fallback.
+- Fix: Keep previous quota values marked stale on API failures. Expired login shows a sign-in message and uses polling backoff.
+- Limitation: Silent credential access currently supports Windows. The API is internal; login renewal is managed by Antigravity, not this extension.
+
+## [0.1.4] - 2026-10-04
+
+- Refactor: Split CLI execution, parsing, quota calculations, alerts, diagnostics, and UI into modules under `src/`. Keep `extension.js` as the entry point with compatible exports.
+- Fix: Background CLI queries are disabled by default, preventing automatic terminal popups on startup and quota polling. Use **Antigravity: Refresh Usage**, or enable `antigravity.backgroundRefresh` to opt into automatic checks.
+- Fix: Cache the working usage executable and legacy output mode; only retry legacy output when JSON options are unsupported.
+- Fix: Back off automatic refreshes after failures and prevent overlapping model queries.
+- Clarification: Window suppression applies to the directly launched CLI; processes launched internally by the CLI may still create windows during manual or opted-in automatic checks.
 
 ## [0.1.3] - 2026-09-16
 
@@ -13,7 +31,7 @@ Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how 
 
 ## [0.1.2] - 2026-09-16
 
-- Fix: Replaced `execFile` with a `spawn`-based `spawnHidden` helper that properly applies `CREATE_NO_WINDOW` to console-subsystem `.exe` files like `agy.exe`, fully eliminating the Windows terminal flash on every quota refresh.
+- Fix: Replaced `execFile` with a `spawn`-based `spawnHidden` helper that properly applies `CREATE_NO_WINDOW` to console-subsystem `.exe` files like `agy.exe`, to suppress the directly launched console window. Child processes could still open windows.
 
 ## [0.1.1] - 2026-09-16
 
