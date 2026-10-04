@@ -1,117 +1,73 @@
-# Antigravity Usage Monitor
+﻿# Antigravity Usage Monitor
 
-A lightweight VS Code extension that monitors your Google Antigravity token limits and quota remaining in real-time directly from the status bar.
+See your remaining Antigravity quota in the VS Code status bar. Hover for five-hour and weekly limits, reset times, and a daily budget estimate. Click to open quota details and the available model list.
 
-![Status Bar Preview](https://res.cloudinary.com/diwwqfwjb/image/upload/v1789523048/d57043d1-0510-4157-9825-b4f5eceb4662.png)
+![Status bar preview](https://res.cloudinary.com/diwwqfwjb/image/upload/v1789523048/d57043d1-0510-4157-9825-b4f5eceb4662.png)
 
-## Features
+## Getting started
 
-- **📅 Daily Budget Planner**: Automatically divides your weekly remaining quota by the number of days left until reset — so you always know your per-day spending allowance (e.g. Weekly 70% ÷ 5 days left = 🟢 14%/day). Displayed in the hover tooltip alongside your current 5-hour remaining quota.
-- **Structured JSON Engine & Robust Parsing**: Leverages `agy -p "/usage" --output-format json` for official bucket IDs, accurate fractions, and human refresh times, with fallback to tabular output.
-- **Customizable Status Bar Formats**: Choose between `compact`, `lowestOnly`, `detailed`, and `iconOnly` displays via `antigravity.statusBarFormat`.
-- **Native Visual Health Tinting**: Status bar background and text visually tint to Warning or Error colors when quotas run low.
-- **Quota Depletion Alert Notifications**: Optional toast alerts notify you when quotas cross below your configured critical threshold.
-- **Interactive QuickPick Dashboard & Model Catalog**: Click the status bar item to view ASCII progress bars, inspect available models (`agy models`), copy model IDs, and run diagnostic actions.
-- **Dedicated Activity Bar TreeView**: Clutter-free sidebar panel organizing quota buckets, real-time countdowns, and available models.
-- **Rich Markdown Tooltip**: Hover over the status bar item to view color-coded badges (🟢 Healthy, 🟡 Moderate, 🔴 Critical), localized reset times, and the Daily Budget Planner — all with embedded action links.
-- **Diagnostics Output Channel**: Inspect CLI resolution logs, execution latencies, and debug telemetry via `antigravity.showLogs`.
-- **No Terminal Flash on Windows**: Uses a `spawn`-based approach with full `CREATE_NO_WINDOW` suppression so no console window ever flashes when querying the `agy` CLI.
+The default API mode requires Windows, VS Code 1.137.0 or later, and an existing Antigravity CLI (`agy`) login saved in Windows Credential Manager. The local VSIX build targets Windows x64.
 
-## Prerequisites
+1. Sign in through `agy` if you haven't already.
+2. Open Extensions with `Ctrl+Shift+X`, search for **Antigravity Usage Monitor**, and install it. If you have a `.vsix` file, use the Extensions menu's **Install from VSIX...** option instead.
+3. Open a trusted workspace. The extension checks your quota on startup and refreshes every 60 seconds by default.
 
-Before using this extension, make sure:
-1. **Antigravity CLI (`agy`)** is installed on your system.
-2. The CLI is authenticated and functional. You can test this by running the following command in your terminal:
-   ```bash
-   agy -p "/usage"
-   ```
+For a manual check, open the Command Palette with `Ctrl+Shift+P` and run **Antigravity: Refresh Usage**.
 
-## Installation
+API mode makes HTTP requests without launching a terminal, CLI, or PowerShell process. If an API request fails, the extension shows an error rather than switching to the CLI.
 
-### Option 1: Install from VS Code Marketplace
+## Reading your quota
 
-Search for **Antigravity Usage Monitor** in the VS Code Extensions Marketplace (`Ctrl + Shift + X`) and click **Install**.
+`Claude: 100% | Gem: 97%` means those groups have 100% and 97% of their five-hour quota remaining. These percentages show remaining quota, not token counts. Models in the same group share that group's quota.
 
-### Option 2: Install via VSIX
+Hover over the status bar to see weekly limits and reset times in your local time zone. Open the Antigravity icon in the Activity Bar for the sidebar view, or click the status bar to browse quota details and models.
 
-1. Download the latest `.vsix` file from the [Releases](https://github.com/nathanielfaborada/antigravity-usage-monitor/releases) page.
-2. Install it into VS Code using either method:
-   - **Via VS Code UI**:
-     1. Open VS Code and go to the Extensions view (`Ctrl + Shift + X`).
-     2. Click the `...` (More Actions) menu at the top-right of the Extensions panel.
-     3. Select **Install from VSIX...** and choose the downloaded file.
-   - **Via Terminal**:
-     ```bash
-     code --install-extension agy-quota-monitor-0.1.3.vsix
-     ```
+The daily budget estimate divides your remaining weekly quota by the days left until reset. For example, 70% remaining with five days left gives an estimate of 14% per day. This helps you pace usage; it does not change your account's limits.
 
-### Option 3: Build & Install from Source
+If a refresh fails, the extension keeps previous readings and marks them **stale**. Automatic retries slow down after repeated failures, up to a one-hour delay. A manual refresh bypasses that delay.
 
-```bash
-# Clone the repository
-git clone https://github.com/nathanielfaborada/antigravity-usage-monitor.git
-cd antigravity-usage-monitor
+## Settings
 
-# Package the VSIX
-npx vsce package --no-dependencies
+Open Settings and search for `antigravity`.
 
-# Install into VS Code
-code --install-extension agy-quota-monitor-0.1.3.vsix --force
-```
-
-## Configuration
-
-This extension can be customized through your VS Code Settings (`settings.json` or UI):
-
-| Setting | Type | Default | Description |
-| :--- | :--- | :--- | :--- |
-| `antigravity.cliPath` | `string` | `"agy"` | Executable name or absolute path to the `agy` CLI binary. |
-| `antigravity.refreshInterval` | `integer` | `60` | Interval in seconds between automatic usage quota refreshes (0 to disable). |
-| `antigravity.statusBarFormat` | `string` | `"compact"` | Format of status bar item (`compact`, `lowestOnly`, `detailed`, `iconOnly`). |
-| `antigravity.notifyOnCritical` | `boolean` | `true` | Show toast notifications when quota drops below critical threshold. |
-| `antigravity.criticalThreshold` | `integer` | `20` | Percentage threshold below which quota status is considered critical. |
-| `antigravity.showDailyBudget` | `boolean` | `true` | Show the Daily Budget Planner in the tooltip — divides weekly remaining quota by days left until reset. |
-
-### Daily Budget Planner
-
-When `antigravity.showDailyBudget` is enabled (default), hovering over the status bar shows a **Daily Budget Planner** section:
-
-```
-> 📅 Daily Budget Planner
-> Claude — Weekly quota ÷ 5 days left = 🟢 14%/day · 5h remaining: 87%
-> Gemini — Weekly quota ÷ 4 days left = 🟡 10%/day · 5h remaining: 62%
-```
-
-The weekly remaining quota is also shown as a **📅 X%/day** column in the main quota table.
-
-**Health indicators:**
-- 🟢 ≥ 15% per day — you're well within budget
-- 🟡 7–14% per day — moderate, use carefully
-- 🔴 < 7% per day — very tight, quota almost exhausted
-
-### Path Fallbacks
-
-If `antigravity.cliPath` is not set or defaults to `"agy"`, the extension automatically resolves the CLI binary in this order:
-
-**Windows** (checks full paths first to avoid console window flashes):
-1. `%LOCALAPPDATA%\agy\bin\agy.exe`
-2. `%USERPROFILE%\.gemini\antigravity-cli\bin\agy.exe`
-3. `agy.exe` (PATH lookup)
-4. `agy` (PATH lookup)
-
-**macOS / Linux**:
-1. `~/.local/bin/agy`
-2. `/usr/local/bin/agy`
-3. `/opt/homebrew/bin/agy`
-4. `/home/linuxbrew/.linuxbrew/bin/agy`
+| Setting | Default | What it does |
+| --- | --- | --- |
+| `antigravity.usageSource` | `api` | Uses the Windows login for silent refresh. `cli` enables legacy manual checks. |
+| `antigravity.backgroundRefresh` | `true` | Refreshes automatically in API mode. Turn off for manual checks only. |
+| `antigravity.refreshInterval` | `60` | Seconds between automatic checks. Set to `0` to disable them. |
+| `antigravity.statusBarFormat` | `compact` | Choose `compact`, `lowestOnly`, `detailed`, or `iconOnly`. |
+| `antigravity.notifyOnCritical` | `true` | Shows a notification when quota crosses below the critical threshold. |
+| `antigravity.criticalThreshold` | `20` | Remaining percentage below which quota is critical. |
+| `antigravity.showDailyBudget` | `true` | Shows the daily budget estimate in the tooltip. |
+| `antigravity.cliPath` | `agy` | Executable name or full path for legacy CLI mode. API mode ignores it. |
 
 ## Commands
 
-- **Antigravity: Show Quota Details & Models** (`antigravity.showDetails`): Opens the interactive QuickPick dashboard with ASCII progress bars and available model catalog.
-- **Antigravity: Refresh Usage** (`antigravity.refreshUsage`): Immediately triggers a fresh check of token limits and updates the status bar and sidebar view.
-- **Antigravity: Show Diagnostics Logs** (`antigravity.showLogs`): Opens the Output panel with diagnostic execution traces and latencies.
-- **Antigravity: Copy Model ID** (`antigravity.copyModelId`): Copies an available model ID to the clipboard or prompts with a QuickPick selector.
+Run these from the Command Palette:
 
-## License
+- **Antigravity: Refresh Usage** checks quotas and updates the model list.
+- **Antigravity: Show Quota Details & Models** opens the dashboard.
+- **Antigravity: Show Diagnostics Logs** opens the extension's Output channel.
+- **Antigravity: Copy Model ID** lets you choose a model ID to copy.
 
-MIT
+## Troubleshooting
+
+### Quota unavailable or login expired
+
+Sign in again through Antigravity, then run **Antigravity: Refresh Usage**. The extension reads your existing login but does not renew it independently. If the error continues, open **Antigravity: Show Diagnostics Logs**. The extension uses Google's internal API, which may change.
+
+### A terminal window opens
+
+Check that `antigravity.usageSource` is set to `api`. Legacy `cli` mode can open a terminal during a manual refresh. After installing an updated VSIX, run **Developer: Reload Window** to load the new extension code.
+
+### Using macOS or Linux
+
+Direct credential access currently supports Windows only. If `agy` is installed and signed in, select `cli` as the usage source and run manual refreshes. CLI mode never checks on startup or polls in the background. Set `antigravity.cliPath` if the executable cannot be found.
+
+## Login data
+
+API mode reads the access token from the Antigravity login in Windows Credential Manager and sends it to Google's quota and model endpoints. The extension does not log the token or write it to workspace files.
+
+For source setup, tests, and packaging, see [CONTRIBUTING.md](CONTRIBUTING.md).
+
+Licensed under [MIT](LICENSE).
