@@ -2,7 +2,7 @@
   "name": "agy-quota-monitor",
   "displayName": "Antigravity Usage Monitor",
   "description": "Monitors Antigravity token limits in status bar",
-  "version": "0.1.5",
+  "version": "0.1.6",
   "publisher": "nathaniel-faborada",
   "repository": {
     "type": "git",
@@ -99,7 +99,10 @@
       "properties": {
         "antigravity.usageSource": {
           "type": "string",
-          "enum": ["api", "cli"],
+          "enum": [
+            "api",
+            "cli"
+          ],
           "default": "api",
           "description": "API reads the existing Windows Antigravity login and refreshes quotas without launching processes. CLI is a legacy manual-only option and may show a terminal window. API failures never fall back to CLI.",
           "scope": "application"
