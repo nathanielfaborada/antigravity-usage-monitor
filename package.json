@@ -2,7 +2,7 @@
   "name": "agy-quota-monitor",
   "displayName": "Antigravity Usage Monitor",
   "description": "Monitors Antigravity token limits in status bar",
-  "version": "0.1.3",
+  "version": "0.1.5",
   "publisher": "nathaniel-faborada",
   "repository": {
     "type": "git",
@@ -29,7 +29,7 @@
   "capabilities": {
     "untrustedWorkspaces": {
       "supported": false,
-      "description": "Antigravity CLI execution is disabled in untrusted workspaces."
+      "description": "Antigravity credential access and quota queries are disabled in untrusted workspaces."
     }
   },
   "activationEvents": [
@@ -97,6 +97,19 @@
     "configuration": {
       "title": "Antigravity Usage Monitor",
       "properties": {
+        "antigravity.usageSource": {
+          "type": "string",
+          "enum": ["api", "cli"],
+          "default": "api",
+          "description": "API reads the existing Windows Antigravity login and refreshes quotas without launching processes. CLI is a legacy manual-only option and may show a terminal window. API failures never fall back to CLI.",
+          "scope": "application"
+        },
+        "antigravity.backgroundRefresh": {
+          "type": "boolean",
+          "default": true,
+          "description": "Automatically refresh quotas using the API. Never launches CLI processes. Turn off for manual refresh only.",
+          "scope": "application"
+        },
         "antigravity.cliPath": {
           "type": "string",
           "default": "agy",
@@ -152,6 +165,7 @@
     }
   },
   "scripts": {
+    "test:process": "node test/process-regression.cjs",
     "lint": "eslint .",
     "pretest": "npm run lint",
     "test": "vscode-test"
@@ -168,5 +182,8 @@
   "overrides": {
     "diff": "^8.0.4",
     "serialize-javascript": "^7.0.6"
+  },
+  "dependencies": {
+    "koffi": "^3.3.2"
   }
 }
