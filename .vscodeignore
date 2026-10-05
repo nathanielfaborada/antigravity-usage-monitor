@@ -3,6 +3,16 @@
 test/**
 tools/**
 audit/**
+**/*.log
+image.png
+videoexecution.md
+.env
+.env.*
+**/*.pem
+**/*.key
+coverage/**
+.nyc_output/**
+.cache/**
 CONTRIBUTING.md
 .gitignore
 **/jsconfig.json
