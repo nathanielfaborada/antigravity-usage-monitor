@@ -37,7 +37,11 @@ const sandbox = {
   module: { exports: {} }, process,
   Date: class extends Date { static now() { return now; } },
   setTimeout: () => 1, clearTimeout() {},
-  setInterval: fn => { interval = fn; return 1; }, clearInterval() { interval = undefined; },
+  setInterval: (fn, milliseconds) => {
+    if (milliseconds === 1000) return 2;
+    interval = fn;
+    return 1;
+  }, clearInterval(id) { if (id === 1) interval = undefined; },
   require: name => name === 'vscode' ? vscode : name === 'child_process' ? {
     spawn: (file, args, options) => {
       launches++;
@@ -75,7 +79,8 @@ function loadModule(filename) {
   return module.exports;
 }
 const extension = loadModule(require.resolve('../extension.js'));
-const context = { subscriptions: [] };
+const globalState = { get: (key, fallback) => fallback, update: async () => {} };
+const context = { subscriptions: [], globalState };
 extension.activate(context);
 assert.equal(launches, 0, 'Manual mode must not launch CLI on activation');
 assert.equal(interval, undefined);
@@ -125,7 +130,7 @@ assert.equal(missingAttempts, 2, 'Missing binaries must still allow discovery');
 
 config.backgroundRefresh = true;
 apiResponses = [];
-const backgroundContext = { subscriptions: [] };
+const backgroundContext = { subscriptions: [], globalState };
 extension.activate(backgroundContext);
 for (const response of apiResponses.splice(0)) response();
 assert.equal(typeof interval, 'function');
@@ -144,7 +149,7 @@ for (const disposable of backgroundContext.subscriptions) disposable.dispose?.()
 for (const response of apiResponses.splice(0)) assert.doesNotThrow(response);
 config.backgroundRefresh = false;
 config.statusBarFormat = 'iconOnly';
-const staleContext = { subscriptions: [] };
+const staleContext = { subscriptions: [], globalState };
 extension.activate(staleContext);
 commands.get('antigravity.refreshUsage')();
 const quota = JSON.stringify({ groups: [{ name: 'Gemini Models', buckets: [{ remaining_fraction: 0.8, window: '5h' }] }] });
@@ -160,6 +165,6 @@ emptyResponses[1]();
 assert.equal(status.text, `${previousText} (stale)`, 'Empty responses must preserve previous readings and the configured format');
 for (const disposable of staleContext.subscriptions) disposable.dispose?.();
 config.usageSource = 'cli';
-extension.activate({ subscriptions: [] });
+extension.activate({ subscriptions: [], globalState });
 assert.equal(interval, undefined, 'Legacy CLI mode must never poll or run on startup');
 console.log('Process regression checks passed: manual startup, concurrency, suppression, retry limits, legacy cache, discovery, backoff and disposal.');

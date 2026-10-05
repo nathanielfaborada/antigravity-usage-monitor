@@ -2,7 +2,7 @@
   "name": "agy-quota-monitor",
   "displayName": "Antigravity Usage Monitor",
   "description": "Monitors Antigravity token limits in status bar",
-  "version": "0.1.6",
+  "version": "0.1.9",
   "publisher": "nathaniel-faborada",
   "repository": {
     "type": "git",
@@ -33,16 +33,15 @@
     }
   },
   "activationEvents": [
-    "onStartupFinished",
-    "onCommand:antigravity.refreshUsage",
-    "onCommand:antigravity.showDetails",
-    "onCommand:antigravity.showLogs",
-    "onCommand:antigravity.copyModelId",
-    "onView:antigravity.quotaView"
+    "onStartupFinished"
   ],
   "main": "./extension.js",
   "contributes": {
     "commands": [
+      { "command": "antigravity.setResetAlarm", "title": "Antigravity: Set Quota Reset Alarm" },
+      { "command": "antigravity.testAlarmSound", "title": "Antigravity: Test Alarm Sound" },
+      { "command": "antigravity.stopAlarmSound", "title": "Antigravity: Stop Alarm Sound" },
+      { "command": "antigravity.clearResetAlarms", "title": "Antigravity: Clear Reset Alarms" },
       {
         "command": "antigravity.refreshUsage",
         "title": "Antigravity: Refresh Usage",
@@ -97,6 +96,18 @@
     "configuration": {
       "title": "Antigravity Usage Monitor",
       "properties": {
+        "antigravity.alarmSound": {
+          "type": "boolean", "default": true,
+          "description": "Play a sound for armed quota reset alarms on Windows. Keep VS Code open and your PC awake.", "scope": "application"
+        },
+        "antigravity.alarmVolume": {
+          "type": "integer", "default": 70, "minimum": 0, "maximum": 100,
+          "description": "Alarm sound volume as a percentage. System volume also applies.", "scope": "application"
+        },
+        "antigravity.alarmRepeat": {
+          "type": "boolean", "default": false,
+          "description": "Repeat alarm sound until stopped, snoozed, or dismissed, for up to 60 seconds.", "scope": "application"
+        },
         "antigravity.usageSource": {
           "type": "string",
           "enum": [
@@ -168,6 +179,7 @@
     }
   },
   "scripts": {
+    "test:alarms": "node --test test/alarm-regression.cjs",
     "test:process": "node test/process-regression.cjs",
     "lint": "eslint .",
     "pretest": "npm run lint",

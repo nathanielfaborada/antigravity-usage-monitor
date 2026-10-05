@@ -50,6 +50,12 @@ async function showDetails(state) {
 
   // Actions items
   items.push({ kind: vscode.QuickPickItemKind.Separator, label: 'Actions' });
+  for (const [label, command] of [
+    ['Set Quota Reset Alarm', 'antigravity.setResetAlarm'],
+    ['Test Alarm Sound', 'antigravity.testAlarmSound'],
+    ['Stop Alarm Sound', 'antigravity.stopAlarmSound'],
+    ['Clear Reset Alarms', 'antigravity.clearResetAlarms']
+  ]) items.push({ label, command });
   items.push({
     label: '$(sync) Refresh Quotas',
     description: 'Fetch latest usage metrics',
@@ -79,7 +85,9 @@ async function showDetails(state) {
     quickPick.dispose();
     if (!selected) return;
 
-    if (selected.action === 'refresh') {
+    if (selected.command) {
+      vscode.commands.executeCommand(selected.command);
+    } else if (selected.action === 'refresh') {
       vscode.commands.executeCommand('antigravity.refreshUsage');
     } else if (selected.action === 'settings') {
       vscode.commands.executeCommand('workbench.action.openSettings', 'antigravity');

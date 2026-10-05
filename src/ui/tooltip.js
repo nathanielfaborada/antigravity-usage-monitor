@@ -1,7 +1,7 @@
 const vscode = require('vscode');
 const { sortGroups, computeDailyBudget, getShortGroupName, formatModelLabel, getStatusBadge, formatResetTime } = require('../quota');
 
-function createUsageTooltip(parsedRows) {
+function createUsageTooltip(parsedRows, nextAlarm) {
   const md = new vscode.MarkdownString();
   md.isTrusted = true;
   md.supportThemeIcons = true;
@@ -9,6 +9,11 @@ function createUsageTooltip(parsedRows) {
   const showDailyBudget = vscode.workspace.getConfiguration('antigravity').get('showDailyBudget', true);
 
   md.appendMarkdown(`### $(dashboard) Antigravity Quotas\n\n`);
+  if (nextAlarm) {
+    md.appendText(`Next alarm: ${nextAlarm.group} (${nextAlarm.window}) at ${new Date(nextAlarm.due).toLocaleString()}`);
+    md.appendMarkdown('\n\n');
+  }
+  md.appendMarkdown('[Set Reset Alarm](command:antigravity.setResetAlarm) | [Test Sound](command:antigravity.testAlarmSound) | [Stop Sound](command:antigravity.stopAlarmSound) | [Clear Alarms](command:antigravity.clearResetAlarms)\n\n');
 
   if (showDailyBudget) {
     const groups = sortGroups(parsedRows.map(r => r.group));
