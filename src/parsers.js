@@ -59,32 +59,34 @@ function parseUsageOutput(raw) {
       if (Array.isArray(groups)) {
         const results = [];
         for (const grp of groups) {
-          const groupName = grp.name || 'Unknown Group';
+          const groupName = grp.name || grp.displayName || grp.display_name || 'Unknown Group';
           const groupDesc = grp.description || '';
           const buckets = Array.isArray(grp.buckets) ? grp.buckets : [];
 
           for (const b of buckets) {
-            const percent = typeof b.remaining_fraction === 'number'
-              ? Math.round(b.remaining_fraction * 100)
+            const fraction = b.remaining_fraction ?? b.remainingFraction;
+            const bucketId = b.id || b.bucketId || b.bucket_id;
+            const percent = typeof fraction === 'number'
+              ? Math.round(fraction * 100)
               : (typeof b.percent === 'number' ? b.percent : 0);
 
-            const limitName = b.name || 'Limit';
+            const limitName = b.name || b.displayName || b.display_name || 'Limit';
             let window = b.window || '';
             if (!window) {
-              if (/5h|five\s*hour/i.test(b.id || limitName)) window = '5h';
-              else if (/weekly/i.test(b.id || limitName)) window = 'weekly';
-              else if (/daily/i.test(b.id || limitName)) window = 'daily';
-              else if (/monthly/i.test(b.id || limitName)) window = 'monthly';
+              if (/5h|five\s*hour/i.test(bucketId || limitName)) window = '5h';
+              else if (/weekly/i.test(bucketId || limitName)) window = 'weekly';
+              else if (/daily/i.test(bucketId || limitName)) window = 'daily';
+              else if (/monthly/i.test(bucketId || limitName)) window = 'monthly';
             }
 
             results.push({
               group: groupName,
               groupDescription: groupDesc,
               limit: limitName,
-              bucketId: b.id || `${groupName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${window || 'limit'}`,
+              bucketId: bucketId || `${groupName.toLowerCase().replace(/[^a-z0-9]+/g, '-')}-${window || 'limit'}`,
               window,
               percent,
-              remainingFraction: typeof b.remaining_fraction === 'number' ? b.remaining_fraction : (percent / 100),
+              remainingFraction: typeof fraction === 'number' ? fraction : (percent / 100),
               resetTime: b.reset_time || b.resetTime || '',
               description: b.description || ''
             });

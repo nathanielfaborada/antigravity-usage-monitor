@@ -50,12 +50,14 @@ function normalizeSummary(payload) {
   const groups = payload.groups || payload.quotaSummary?.groups || payload.quota_summary?.groups;
   if (!Array.isArray(groups)) throw new Error('Quota API returned no quota groups.');
   const normalized = groups.map(group => ({
-    name: group.name, description: group.description,
+    name: group.name || group.displayName || group.display_name, description: group.description,
     buckets: (Array.isArray(group.buckets) ? group.buckets : []).flatMap(bucket => {
       const fraction = bucket.remaining_fraction ?? bucket.remainingFraction;
       if (typeof fraction !== 'number' || !Number.isFinite(fraction) || fraction < 0 || fraction > 1) return [];
       return [{
         ...bucket, remaining_fraction: fraction,
+        name: bucket.name || bucket.displayName || bucket.display_name,
+        id: bucket.id || bucket.bucketId || bucket.bucket_id,
         reset_time: bucket.reset_time || bucket.resetTime || ''
       }];
     })
