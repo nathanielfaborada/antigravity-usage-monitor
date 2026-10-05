@@ -8,6 +8,7 @@ const { checkCriticalAlerts } = require('./alerts');
 const { QuotaTreeDataProvider } = require('./ui/treeView');
 const { showDetails } = require('./ui/dashboard');
 const { createUsageTooltip } = require('./ui/tooltip');
+const { createAlarms } = require('./alarms');
 
 /**
  * @param {vscode.ExtensionContext} context
@@ -45,6 +46,10 @@ function activate(context) {
     lastUpdated: null,
     alertedKeys: new Set()
   };
+
+  const alarms = createAlarms(context, () => state.lastParsedRows, () => {
+    if (state.lastParsedRows.length) statusBarItem.tooltip = createUsageTooltip(state.lastParsedRows, alarms.next());
+  });
 
   function updateStatusBarDisplay() {
     if (!state.lastParsedRows || state.lastParsedRows.length === 0) return;
@@ -144,6 +149,7 @@ function activate(context) {
 
       state.lastParsedRows = parsedRows;
       state.lastUpdated = new Date();
+      alarms.sync(parsedRows);
 
       updateStatusBarDisplay();
 
@@ -155,7 +161,7 @@ function activate(context) {
 
       treeDataProvider.refresh(parsedRows, state.lastModels);
 
-      statusBarItem.tooltip = createUsageTooltip(parsedRows);
+      statusBarItem.tooltip = createUsageTooltip(parsedRows, alarms.next());
     });
   }
 

@@ -1,5 +1,20 @@
 ﻿# Changelog
 
+## [0.1.9] - 2026-10-05
+
+- Update setup instructions, alarm settings, commands, and sound troubleshooting in the README.
+- Add a 30-second video walkthrough prompt and recording script in videoexecution.md.
+
+## [0.1.8] - 2026-10-05
+
+- Add persistent quota reset alarms with Windows sound, volume, optional repeat, snooze, and dismiss.
+- Add commands and dashboard actions to set alarms, test or stop sound, and clear alarms.
+
+## [0.1.7] - 2026-10-05
+
+- Read API display names and bucket IDs so Gemini and Claude quotas remain separate in the status bar and Daily Budget Planner.
+- Support camelCase and snake_case quota fields.
+
 ## [0.1.6] - 2026-10-04
 
 - Rewrite the README with setup, usage, settings, and troubleshooting instructions.
